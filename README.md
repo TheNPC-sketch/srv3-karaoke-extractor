@@ -234,7 +234,11 @@ sudo ./install.sh
 sudo rm /usr/local/bin/srv3
 sudo rm /usr/local/bin/ytsubconverter
 sudo apt remove ytsubconverter
-##Optional:
+```
+
+Optionally:
+
+```
 rm -rf ~/.srv3_config
 ```
 
@@ -243,7 +247,7 @@ rm -rf ~/.srv3_config
 - `yt-dlp`
 - `ffmpeg`
 
-**This project would not be possible without these tools.**
+**This project would not be possible without these essential tools.**
 
 ## ⭐ Notes
 - Intended for karaoke / syllable-animated subtitle tracks
