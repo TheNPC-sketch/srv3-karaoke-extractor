@@ -1,7 +1,4 @@
-# srv3-karaoke-extractor
-Extract and convert YouTube karaoke-style (.srv3) subtitles to .ass while downloading videos, with a fully automated installer for Ubuntu-based distros.
-
-# srv3 – YouTube Karaoke Subtitle Extractor (.srv3 → .ass)
+# srv3-karaoke-extractor – YouTube Karaoke Subtitle Extractor (.srv3 → .ass)
 
 `srv3` is a Linux command-line tool designed specifically for YouTube videos that use karaoke-style, syllable-animated subtitles (the `.srv3` subtitle format).
 
@@ -76,16 +73,21 @@ All files must remain in the same directory during installation for **your distr
 
 1️⃣ Clone the repository:
 ```
-git clone https://github.com/yourusername/srv3.git
-cd srv3
+git clone https://github.com/TheNPC-sketch/srv3-karaoke-extractor
+cd srv3-karaoke-extractor
 ```
 
 2️⃣ Make installer executable:
 
-```chmod +x install.sh```
+```
+chmod +x install.sh
+```
 
 3️⃣ Run the installer:
-```sudo ./install.sh```
+
+```
+sudo ./install.sh
+```
 
 This will:
 
@@ -165,16 +167,12 @@ All paths and tools follow Linux standards for your distro
 
 `srv3` is intended for your distro if it is:
 
-Ubuntu
-
-Xubuntu
-
-Kubuntu
-
-Linux Mint
+- Ubuntu
+- Xubuntu
+- Kubuntu
+- Linux Mint
 
 Any Debian-based distro
-
 
 ~Verify:
 
@@ -202,7 +200,9 @@ sudo apt install dotnet-runtime-8.0
 
 Verify:
 
-```dotnet --list-runtimes```
+```
+dotnet --list-runtimes
+```
 
 4️⃣ ytsubconverter command missing
 
@@ -215,17 +215,23 @@ dotnet /opt/ytsubconverter/ytsubconverter.dll "$@"
 EOF
 ```
 
-```sudo chmod +x /usr/local/bin/ytsubconverter```
+```
+sudo chmod +x /usr/local/bin/ytsubconverter
+```
 
 5️⃣ srv3 command missing
 
-```sudo install -m 755 srv3 /usr/local/bin/srv3```
+```
+sudo install -m 755 srv3 /usr/local/bin/srv3
+```
 
 6️⃣ Re-run installer
 
 Safe to rerun for your distro:
 
-```sudo ./install.sh```
+```
+sudo ./install.sh
+```
 
 ## 🧹 Uninstalling
 
@@ -241,10 +247,7 @@ rm -rf ~/.srv3_config
 MIT License
 
 ## ⭐ Notes
-Intended for karaoke / syllable-animated subtitle tracks
-
-Not useful for plain .srt subtitles
-
-Desktop environment independent
-
-Designed to be stable and distro-friendly
+- Intended for karaoke / syllable-animated subtitle tracks
+- Not useful for plain .srt subtitles
+- Desktop environment independent
+- Designed to be stable and distro-friendly
