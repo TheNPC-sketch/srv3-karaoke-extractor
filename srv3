@@ -1,0 +1,78 @@
+#!/bin/bash
+
+# ----------------------------------------
+# YTSubConverter + yt-dlp interactive downloader
+# Downloads video + .srv3 subtitles, converts to .ass
+# Folder named: <VideoTitle>_<Quality>
+# ----------------------------------------
+
+# Check for yt-dlp
+if ! command -v yt-dlp &> /dev/null; then
+    echo "Error: yt-dlp is not installed. Install it first."
+    exit 1
+fi
+
+# Check for YTSubConverter CLI
+if ! command -v ytsubconverter &> /dev/null; then
+    echo "Error: YTSubConverter CLI is not installed or not in PATH."
+    echo "Try running: dotnet /opt/ytsubconverter/ytsubconverter.dll"
+    exit 1
+fi
+
+# Check for input URL
+if [ -z "$1" ]; then
+    echo "Usage: $0 <YouTube URL>"
+    exit 1
+fi
+
+URL="$1"
+
+# Get the video title
+VIDEO_TITLE=$(yt-dlp --get-title "$URL")
+# Make it safe for folder names
+SAFE_TITLE=$(echo "$VIDEO_TITLE" | sed 's#[/:]#_#g')
+
+# List available formats
+echo "Available formats for \"$VIDEO_TITLE\":"
+yt-dlp -F "$URL"
+
+# Ask user which format to download
+read -p "Enter the format code you want to download: " FORMAT_CODE
+
+# Get the resolution and FPS for folder naming
+FORMAT_INFO=$(yt-dlp -F "$URL" | grep "^$FORMAT_CODE " | awk '{print $3,$4}')
+QUALITY_SUFFIX=$(echo "$FORMAT_INFO" | tr -d ' ')
+
+# Create folder in ~/Videos with title + quality
+DEST_DIR="$HOME/Videos/${SAFE_TITLE}_${QUALITY_SUFFIX}"
+mkdir -p "$DEST_DIR"
+
+echo "Downloading video and subtitles to: $DEST_DIR"
+
+# Download the video + subtitles
+yt-dlp "$URL" \
+    -f "$FORMAT_CODE" \
+    --merge-output-format mp4 \
+    --write-subs --sub-format srv3 \
+    -o "$DEST_DIR/%(title)s.%(ext)s"
+
+echo "Download complete."
+
+# Convert all .srv3 subtitles to .ass in the same folder
+for file in "$DEST_DIR"/*.srv3; do
+    [ -f "$file" ] || continue
+    output="${file%.srv3}.ass"
+
+    echo "Converting '$file' -> '$output'..."
+    ytsubconverter "$file" "$output"
+
+    if [ $? -eq 0 ]; then
+        echo "Converted successfully: '$output'"
+        rm "$file"
+        echo "Deleted original: '$file'"
+    else
+        echo "Conversion failed for: '$file'"
+    fi
+done
+
+echo "All done!"
