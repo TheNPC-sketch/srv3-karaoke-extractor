@@ -60,14 +60,13 @@ No manual setup is normally required.
 
 Your repository should contain:
 
+```
 .
 ├── install.sh
-
 ├── srv3
-
 ├── YTSubConverter-Linux.deb
-
 └── README.md
+```
 
 All files must remain in the same directory during installation for **your distro**.
 
@@ -76,46 +75,54 @@ All files must remain in the same directory during installation for **your distr
 ## 🚀 Installation (Recommended for Your Distro)
 
 1️⃣ Clone the repository:
+```
 git clone https://github.com/yourusername/srv3.git
 cd srv3
+```
 
 2️⃣ Make installer executable:
-chmod +x install.sh
+
+`chmod +x install.sh`
 
 3️⃣ Run the installer:
-sudo ./install.sh
+`sudo ./install.sh`
 
 This will:
 
-Install all dependencies for your distro
-Install yt-dlp
-Install .NET 8 Runtime
-Install YTSubConverter
-Register global commands:
-
-srv3
-ytsubconverter
+- Install all dependencies for your distro
+- Install yt-dlp
+- Install .NET 8 Runtime
+- Install YTSubConverter
+- Register global commands:
+- srv3
+- ytsubconverter
 
 🔹 Logging out and back in is recommended after installation.
 
 ## 🎬 Usage
 Download karaoke-subbed videos
 
+```
 srv3 "https://www.youtube.com/watch?v=VIDEO_ID"
+```
 
 What happens:
-Video is downloaded
-.srv3 karaoke subtitles are extracted
-Subtitles are converted to .ass
-.srv3 files are deleted
+
+- Video is downloaded
+- .srv3 karaoke subtitles are extracted
+- Subtitles are converted to .ass
+- .srv3 files are deleted
+
 Output is saved to:
 
+```
 ~/Videos/<Video Title>/
+```
 
 This workflow is specifically optimized for karaoke / syllable-animated subtitle tracks.
 
 ## 🎚 Format Selection
-When running, srv3:
+When running, `srv3`:
 
 Lists all available YouTube formats
 
@@ -155,7 +162,7 @@ All paths and tools follow Linux standards for your distro
 ## ❗ If install.sh Fails (Detailed Help)
 1️⃣ Confirm supported distro
 
-srv3 is intended for your distro if it is:
+`srv3` is intended for your distro if it is:
 
 Ubuntu
 
@@ -170,34 +177,41 @@ Any Debian-based distro
 Verify:
 
 lsb_release -a
+
 2️⃣ Missing .deb file
 
+```
 Error:
 
 YTSubConverter-Linux.deb not found
 Fix: Download the Linux .deb for YTSubConverter and place it next to install.sh.
+```
 
 3️⃣ .NET runtime issues
 
 Install manually for your distro:
 
+```
 sudo apt update
 sudo apt install dotnet-runtime-8.0
 
+```
 Verify:
 
-dotnet --list-runtimes
+```dotnet --list-runtimes```
 
 4️⃣ ytsubconverter command missing
 
 Manually create the wrapper:
 
+```
 sudo tee /usr/local/bin/ytsubconverter > /dev/null << 'EOF'
 #!/bin/bash
 dotnet /opt/ytsubconverter/ytsubconverter.dll "$@"
 EOF
+```
 
-sudo chmod +x /usr/local/bin/ytsubconverter
+```sudo chmod +x /usr/local/bin/ytsubconverter```
 
 5️⃣ srv3 command missing
 
