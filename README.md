@@ -242,8 +242,8 @@ rm -rf ~/.srv3_config
 - `YTSubConverter`
 - `yt-dlp`
 - `ffmpeg`
-- 
-**This project would not be possible without these applications**
+
+**This project would not be possible without these tools.**
 
 ## ⭐ Notes
 - Intended for karaoke / syllable-animated subtitle tracks
