@@ -62,12 +62,12 @@ Your repository should contain:
 
 .
 ├── install.sh
-├── srv3
-├── YTSubConverter-Linux.deb
-└── README.md
 
-yaml
-Copy code
+├── srv3
+
+├── YTSubConverter-Linux.deb
+
+└── README.md
 
 All files must remain in the same directory during installation for **your distro**.
 
