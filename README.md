@@ -102,7 +102,7 @@ This will:
 🔹 Logging out and back in is recommended after installation.
 
 ## 🎬 Usage
-Download karaoke-subbed videos
+Download karaoke-subbed videos by using the following command:
 
 ```
 srv3 "https://www.youtube.com/watch?v=VIDEO_ID"
@@ -158,7 +158,7 @@ Organizes output into `~/Videos`
 All paths and tools follow Linux standards for your debian-based distro
 
 ## ❗ If install.sh Fails (Detailed Help)
-1️⃣ Confirm supported distro
+**1️⃣ Confirm supported distro**
 
 `srv3` is intended for your distro if it is:
 
@@ -175,16 +175,20 @@ Any Debian-based distro
 lsb_release -a
 ```
 
-2️⃣ Missing .deb file
+**2️⃣ Missing .deb file**
 
-```
+
 Error:
 
+```
 YTSubConverter-Linux.deb not found
-Fix: Download the Linux .deb for YTSubConverter and place it next to install.sh.
 ```
 
-3️⃣ .NET runtime issues
+Fix: 
+Download the Linux `.deb` for `YTSubConverter` and place it next to install.sh.
+
+
+**3️⃣ .NET runtime issues**
 
 Install manually for your distro:
 
@@ -199,7 +203,7 @@ Verify:
 dotnet --list-runtimes
 ```
 
-4️⃣ ytsubconverter command missing
+**4️⃣ ytsubconverter command missing**
 
 Manually create the wrapper:
 
@@ -214,13 +218,13 @@ EOF
 sudo chmod +x /usr/local/bin/ytsubconverter
 ```
 
-5️⃣ srv3 command missing
+**5️⃣ srv3 command missing**
 
 ```
 sudo install -m 755 srv3 /usr/local/bin/srv3
 ```
 
-6️⃣ Re-run installer
+**6️⃣ Re-run installer**
 
 Safe to rerun for your distro:
 
@@ -236,18 +240,18 @@ sudo rm /usr/local/bin/ytsubconverter
 sudo apt remove ytsubconverter
 ```
 
-Optionally:
+**Optionally:**
 
 ```
 rm -rf ~/.srv3_config
 ```
 
 ## 👏 Huge Thanks TO!
-- `YTSubConverter`
-- `yt-dlp`
-- `ffmpeg`
+- `YTSubConverter` -- https://github.com/arcusmaximus/YTSubConverter/
+- `yt-dlp` -- https://github.com/yt-dlp/yt-dlp/
+- `ffmpeg` -- https://git.ffmpeg.org/ffmpeg.git
 
-**This project would not be possible without these essential tools.**
+**This project would not be possible without these essential tools and utilities.**
 
 ## ⭐ Notes
 - Intended for karaoke / syllable-animated subtitle tracks
