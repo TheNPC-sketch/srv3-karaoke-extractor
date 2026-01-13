@@ -4,7 +4,7 @@
 
 It downloads the video, extracts YouTube’s timing-accurate karaoke subtitle data, converts it to `.ass` format (preserving syllable animation and timing), and organizes everything cleanly into your `~/Videos` directory.
 
-This tool is built to work out of the box for **your distro**, with a fully automated installer for Debian/Ubuntu-based systems (including Xubuntu).
+This tool is built to work out of the box for **your debian-based distro**, with a fully automated installer for Debian/Ubuntu-based systems (including Xubuntu).
 
 ---
 
@@ -35,13 +35,13 @@ YouTube stores this data in the `.srv3` format.
 - Automatically delete original `.srv3` files  
 - Clean output structure: `~/Videos/<Video Title>/`  
 - Global `srv3` command usable from any directory  
-- Fully automated dependency installation for **your distro**
+- Fully automated dependency installation for **your debian-based distro**
 
 ---
 
 ## 📦 Requirements (Installed Automatically)
 
-The installer handles everything required for your distro, including:
+The installer handles everything required for your debian-based distro, including:
 
 - `yt-dlp`  
 - `ffmpeg`  
@@ -65,11 +65,11 @@ Your repository should contain:
 └── README.md
 ```
 
-All files must remain in the same directory during installation for **your distro**.
+All files must remain in the same directory during installation for **your debian-based distro**.
 
 ---
 
-## 🚀 Installation (Recommended for Your Distro)
+## 🚀 Installation (Recommended for Your Debian-Based Distro)
 
 1️⃣ Clone the repository:
 ```
@@ -142,25 +142,20 @@ Prompts user for format selection
 
 Downloads:
 
-Video
-
-Audio
-
-.srv3 karaoke subtitles
-
-Merges streams into MP4
-
-Converts subtitles:
-
-.srv3 → .ass
+- Video
+- Audio
+- .srv3 karaoke subtitles
+- Merges streams into MP4
+- Converts subtitles:
+-     .srv3 → .ass
 
 Preserves syllable timing and karaoke effects
 
 Cleans up intermediate files
 
-Organizes output into ~/Videos
+Organizes output into `~/Videos`
 
-All paths and tools follow Linux standards for your distro
+All paths and tools follow Linux standards for your debian-based distro
 
 ## ❗ If install.sh Fails (Detailed Help)
 1️⃣ Confirm supported distro
@@ -239,7 +234,7 @@ sudo ./install.sh
 sudo rm /usr/local/bin/srv3
 sudo rm /usr/local/bin/ytsubconverter
 sudo apt remove ytsubconverter
-Optional:
+##Optional:
 rm -rf ~/.srv3_config
 ```
 
