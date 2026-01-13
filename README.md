@@ -238,8 +238,12 @@ sudo apt remove ytsubconverter
 rm -rf ~/.srv3_config
 ```
 
-## 🧾 License
-MIT License
+## 👏 Huge Thanks TO!
+- `YTSubConverter`
+- `yt-dlp`
+- `ffmpeg`
+- 
+**This project would not be possible without these applications**
 
 ## ⭐ Notes
 - Intended for karaoke / syllable-animated subtitle tracks
