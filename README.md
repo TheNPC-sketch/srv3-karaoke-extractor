@@ -82,10 +82,10 @@ cd srv3
 
 2️⃣ Make installer executable:
 
-`chmod +x install.sh`
+```chmod +x install.sh```
 
 3️⃣ Run the installer:
-`sudo ./install.sh`
+```sudo ./install.sh```
 
 This will:
 
@@ -122,6 +122,7 @@ Output is saved to:
 This workflow is specifically optimized for karaoke / syllable-animated subtitle tracks.
 
 ## 🎚 Format Selection
+
 When running, `srv3`:
 
 Lists all available YouTube formats
@@ -174,9 +175,12 @@ Linux Mint
 
 Any Debian-based distro
 
-Verify:
 
+~Verify:
+
+```
 lsb_release -a
+```
 
 2️⃣ Missing .deb file
 
@@ -194,8 +198,8 @@ Install manually for your distro:
 ```
 sudo apt update
 sudo apt install dotnet-runtime-8.0
-
 ```
+
 Verify:
 
 ```dotnet --list-runtimes```
@@ -215,21 +219,23 @@ EOF
 
 5️⃣ srv3 command missing
 
-sudo install -m 755 srv3 /usr/local/bin/srv3
+```sudo install -m 755 srv3 /usr/local/bin/srv3```
 
 6️⃣ Re-run installer
 
 Safe to rerun for your distro:
 
-sudo ./install.sh
+```sudo ./install.sh```
 
 ## 🧹 Uninstalling
 
+```
 sudo rm /usr/local/bin/srv3
 sudo rm /usr/local/bin/ytsubconverter
 sudo apt remove ytsubconverter
 Optional:
 rm -rf ~/.srv3_config
+```
 
 ## 🧾 License
 MIT License
