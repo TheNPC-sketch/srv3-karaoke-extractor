@@ -119,19 +119,19 @@ srv3 "https://www.youtube.com/watch?v=VIDEO_ID" [MODE]
 **Example**
 ```
 # Download video with subtitles, keep them in a folder
-./srv3.sh https://www.youtube.com/watch?v=abcd1234
+srv3 "https://www.youtube.com/watch?v=abcd1234"
 
 # Burn subtitles into MP4
-./srv3.sh https://www.youtube.com/watch?v=abcd1234 -burn
+srv3 "https://www.youtube.com/watch?v=abcd1234" -burn
 
 # Edit subtitles before burning
-./srv3.sh https://www.youtube.com/watch?v=abcd1234 -burn-e
+srv3 "https://www.youtube.com/watch?v=abcd1234" -burn-e
 
 # Add soft subtitles as default track (MKV)
-./srv3.sh https://www.youtube.com/watch?v=abcd1234 -soft
+srv3 "https://www.youtube.com/watch?v=abcd1234" -soft
 
 # Edit soft subtitles before muxing
-./srv3.sh https://www.youtube.com/watch?v=abcd1234 -soft-e
+srv3 "https://www.youtube.com/watch?v=abcd1234" -soft-e
 ```
 
 This workflow is specifically optimized for karaoke / syllable-animated subtitle tracks.
