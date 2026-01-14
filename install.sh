@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 echo "==============================="
@@ -17,43 +16,44 @@ fi
 REAL_USER="${SUDO_USER:-$USER}"
 REAL_HOME=$(eval echo "~$REAL_USER")
 
-echo "Installing dependencies..."
+echo "Installing dependencies (forced)..."
 
 # ----------------------------------------
-# System packages
+# System packages (reinstall)
 # ----------------------------------------
 apt update
-apt install -y \
+apt install --reinstall -y \
     curl \
     wget \
     ffmpeg \
     ca-certificates \
     gnupg \
-    software-properties-common
+    software-properties-common \
+    yt-dlp
 
 # ----------------------------------------
-# yt-dlp
+# yt-dlp (APT + overwrite with latest binary)
 # ----------------------------------------
-if ! command -v yt-dlp &> /dev/null; then
-    echo "Installing yt-dlp..."
-    wget -q https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-    chmod +x /usr/local/bin/yt-dlp
-else
-    echo "yt-dlp already installed"
-fi
+echo "Installing yt-dlp (APT + latest binary override)..."
+
+# Ensure apt version is installed
+apt install --reinstall -y yt-dlp
+
+# Overwrite with latest upstream binary
+wget -q https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+    -O /usr/local/bin/yt-dlp
+chmod +x /usr/local/bin/yt-dlp
 
 # ----------------------------------------
-# .NET 8 Runtime
+# .NET 8 Runtime (forced)
 # ----------------------------------------
-if ! command -v dotnet &> /dev/null; then
-    echo "Installing .NET 8 runtime..."
-    wget https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb -O /tmp/microsoft-prod.deb
-    dpkg -i /tmp/microsoft-prod.deb
-    apt update
-    apt install -y dotnet-runtime-8.0
-else
-    echo ".NET already installed"
-fi
+echo "Installing .NET 8 runtime (forced)..."
+wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb \
+    -O /tmp/microsoft-prod.deb
+
+dpkg -i /tmp/microsoft-prod.deb || true
+apt update
+apt install --reinstall -y dotnet-runtime-8.0
 
 # ----------------------------------------
 # YTSubConverter (.deb)
@@ -64,23 +64,23 @@ if [ ! -f "./YTSubConverter-Linux.deb" ]; then
     exit 1
 fi
 
-echo "Installing YTSubConverter..."
-apt install -y ./YTSubConverter-Linux.deb
+echo "Installing YTSubConverter (forced)..."
+apt install --reinstall -y ./YTSubConverter-Linux.deb
 
 # ----------------------------------------
-# Create ytsubconverter CLI wrapper
+# Create ytsubconverter CLI wrapper (overwrite)
 # ----------------------------------------
 echo "Creating ytsubconverter CLI..."
 
 cat << 'EOF' > /usr/local/bin/ytsubconverter
 #!/bin/bash
-dotnet /opt/ytsubconverter/ytsubconverter.dll "$@"
+exec dotnet /opt/ytsubconverter/ytsubconverter.dll "$@"
 EOF
 
 chmod +x /usr/local/bin/ytsubconverter
 
 # ----------------------------------------
-# Install srv3 script globally
+# Install srv3 script globally (overwrite)
 # ----------------------------------------
 if [ ! -f "./srv3" ]; then
     echo "ERROR: srv3 script not found!"
@@ -89,7 +89,7 @@ if [ ! -f "./srv3" ]; then
 fi
 
 echo "Installing srv3 command..."
-install -m 755 ./srv3 /usr/local/bin/srv3
+install -m 755 -o root -g root ./srv3 /usr/local/bin/srv3
 
 # ----------------------------------------
 # Ensure Videos directory exists
@@ -104,8 +104,7 @@ echo
 echo "Verifying installation..."
 
 yt-dlp --version
-ytsubconverter --help > /dev/null || true
-srv3 --help > /dev/null || true
+dotnet --version
 
 echo
 echo "==============================="
