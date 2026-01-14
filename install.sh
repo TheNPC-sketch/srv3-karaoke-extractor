@@ -1,137 +1,116 @@
 #!/bin/bash
+set -e
 
-# ----------------------------------------
-# YTSubConverter + yt-dlp interactive downloader
-#
-# Modes:
-#   (none)     -> keep video + ASS in folder
-#   -burn      -> burn subtitles, auto cleanup, MP4 output
-#   -burn-e    -> edit ASS before burning, MP4 output
-#   -soft      -> mux ASS as soft subtitle track, MKV output, default track
-#   -soft-e    -> edit ASS before muxing, MKV output, default track
-# ----------------------------------------
+echo "==============================="
+echo " srv3 / YTSubExtractor Installer"
+echo "==============================="
 
-# -------- argument handling --------
-URL="$1"
-MODE="normal"
-
-if [ -z "$URL" ]; then
-    echo "Usage: $0 <YouTube URL> [-burn | -burn-e | -soft | -soft-e]"
+# Must be run as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run this installer with sudo:"
+    echo "  sudo ./install.sh"
     exit 1
 fi
 
-case "$2" in
-    -burn)    MODE="burn" ;;
-    -burn-e)  MODE="burn-edit" ;;
-    -soft)    MODE="soft" ;;
-    -soft-e)  MODE="soft-edit" ;;
-esac
+# Detect original user (for HOME paths)
+REAL_USER="${SUDO_USER:-$USER}"
+REAL_HOME=$(eval echo "~$REAL_USER")
 
-# -------- dependency checks --------
-command -v yt-dlp >/dev/null || { echo "yt-dlp not installed"; exit 1; }
-command -v ytsubconverter >/dev/null || { echo "YTSubConverter not found"; exit 1; }
+echo "Installing dependencies (forced)..."
 
-if [[ "$MODE" != "normal" ]] && ! command -v ffmpeg >/dev/null; then
-    echo "ffmpeg is required for this mode"
+# ----------------------------------------
+# System packages (reinstall)
+# ----------------------------------------
+apt update
+apt install --reinstall -y \
+    curl \
+    wget \
+    ffmpeg \
+    ca-certificates \
+    gnupg \
+    software-properties-common \
+    yt-dlp \
+    micro
+
+# ----------------------------------------
+# yt-dlp (APT + overwrite with latest binary)
+# ----------------------------------------
+echo "Installing yt-dlp (APT + latest binary override)..."
+
+# Ensure apt version is installed
+apt install --reinstall -y yt-dlp
+
+# Overwrite with latest upstream binary
+wget -q https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp \
+    -O /usr/local/bin/yt-dlp
+chmod +x /usr/local/bin/yt-dlp
+
+# ----------------------------------------
+# .NET 8 Runtime (forced)
+# ----------------------------------------
+echo "Installing .NET 8 runtime (forced)..."
+wget -q https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb \
+    -O /tmp/microsoft-prod.deb
+
+dpkg -i /tmp/microsoft-prod.deb || true
+apt update
+apt install --reinstall -y dotnet-runtime-8.0
+
+# ----------------------------------------
+# YTSubConverter (.deb)
+# ----------------------------------------
+if [ ! -f "./YTSubConverter-Linux.deb" ]; then
+    echo "ERROR: YTSubConverter-Linux.deb not found!"
+    echo "Put it in the same directory as install.sh"
     exit 1
 fi
 
-# -------- default editor: micro --------
-EDITOR_CMD="${EDITOR:-micro}"
+echo "Installing YTSubConverter (forced)..."
+apt install --reinstall -y ./YTSubConverter-Linux.deb
 
-# -------- metadata --------
-VIDEO_TITLE=$(yt-dlp --get-title "$URL")
-SAFE_TITLE=$(echo "$VIDEO_TITLE" | sed 's#[/:]#_#g')
+# ----------------------------------------
+# Create ytsubconverter CLI wrapper (overwrite)
+# ----------------------------------------
+echo "Creating ytsubconverter CLI..."
 
-# -------- format selection --------
-echo "Available formats for \"$VIDEO_TITLE\":"
-yt-dlp -F "$URL"
-read -p "Enter the format code you want to download: " FORMAT_CODE
+cat << 'EOF' > /usr/local/bin/ytsubconverter
+#!/bin/bash
+exec dotnet /opt/ytsubconverter/ytsubconverter.dll "$@"
+EOF
 
-# -------- quality suffix --------
-FORMAT_INFO=$(yt-dlp -F "$URL" | grep "^$FORMAT_CODE " | awk '{print $3,$4}')
-QUALITY_SUFFIX=$(echo "$FORMAT_INFO" | tr -d ' ')
+chmod +x /usr/local/bin/ytsubconverter
 
-VIDEOS_DIR="$HOME/Videos"
-
-# -------- destination handling --------
-if [[ "$MODE" == "normal" ]]; then
-    DEST_DIR="$VIDEOS_DIR/${SAFE_TITLE}_${QUALITY_SUFFIX}"
-    mkdir -p "$DEST_DIR"
-else
-    DEST_DIR="$VIDEOS_DIR/temp"
-    mkdir -p "$DEST_DIR"
+# ----------------------------------------
+# Install srv3 script globally (overwrite)
+# ----------------------------------------
+if [ ! -f "./srv3" ]; then
+    echo "ERROR: srv3 script not found!"
+    echo "Put your srv3 script in the same directory as install.sh"
+    exit 1
 fi
 
-# -------- set output filename based on mode --------
-if [[ "$MODE" == soft* ]]; then
-    FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}.mkv"
-else
-    FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}.mp4"
-fi
+echo "Installing srv3 command..."
+install -m 755 -o root -g root ./srv3 /usr/local/bin/srv3
 
-echo "Downloading to: $DEST_DIR"
+# ----------------------------------------
+# Ensure Videos directory exists
+# ----------------------------------------
+mkdir -p "$REAL_HOME/Videos"
+chown "$REAL_USER":"$REAL_USER" "$REAL_HOME/Videos"
 
-# -------- download --------
-yt-dlp "$URL" \
-    -f "$FORMAT_CODE" \
-    --merge-output-format mp4 \
-    --write-subs \
-    --sub-format srv3 \
-    -o "$DEST_DIR/%(title)s.%(ext)s"
+# ----------------------------------------
+# Final checks
+# ----------------------------------------
+echo
+echo "Verifying installation..."
 
-echo "Download complete."
+yt-dlp --version
 
-# -------- convert subtitles --------
-ASS_FILE=""
-
-for file in "$DEST_DIR"/*.srv3; do
-    [ -f "$file" ] || continue
-    ASS_FILE="${file%.srv3}.ass"
-    echo "Converting '$file' -> '$ASS_FILE'..."
-    ytsubconverter "$file" "$ASS_FILE" || exit 1
-    rm "$file"
-done
-
-# -------- edit subtitles if requested --------
-if [[ "$MODE" == "burn-edit" || "$MODE" == "soft-edit" ]]; then
-    echo
-    echo "Editing ASS file in micro:"
-    echo "$ASS_FILE"
-    echo "Save and exit to continue."
-    echo
-    "$EDITOR_CMD" "$ASS_FILE"
-fi
-
-# -------- process video --------
-if [[ "$MODE" == "burn" || "$MODE" == "burn-edit" ]]; then
-    echo "Burning subtitles into video..."
-    VIDEO_FILE=$(ls "$DEST_DIR"/*.mp4 | head -n 1)
-
-    ffmpeg -y \
-        -i "$VIDEO_FILE" \
-        -vf "ass=$(printf '%q' "$ASS_FILE")" \
-        -c:a copy \
-        "$FINAL_OUTPUT"
-
-elif [[ "$MODE" == "soft" || "$MODE" == "soft-edit" ]]; then
-    echo "Muxing ASS subtitles as soft subtrack (default)..."
-    VIDEO_FILE=$(ls "$DEST_DIR"/*.mp4 | head -n 1)
-
-    ffmpeg -y \
-        -i "$VIDEO_FILE" \
-        -i "$ASS_FILE" \
-        -map 0:v -map 0:a -map 1:0 \
-        -c copy \
-        -metadata:s:s:0 language=eng \
-        -disposition:s:0 default \
-        "$FINAL_OUTPUT"
-fi
-
-# -------- cleanup --------
-if [[ "$MODE" != "normal" ]]; then
-    echo "Cleaning up temporary files..."
-    rm -rf "$DEST_DIR"
-fi
-
-echo "All done!"
+echo
+echo "==============================="
+echo " INSTALLATION COMPLETE ✅"
+echo "==============================="
+echo
+echo "You can now run from ANY directory:"
+echo "  srv3 \"https://youtube.com/...\""
+echo
