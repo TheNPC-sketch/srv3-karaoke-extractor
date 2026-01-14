@@ -105,20 +105,33 @@ This will:
 Download karaoke-subbed videos by using the following command:
 
 ```
-srv3 "https://www.youtube.com/watch?v=VIDEO_ID"
+srv3 "https://www.youtube.com/watch?v=VIDEO_ID" [MODE]
 ```
 
-What happens:
+| Mode      | Output                                  | Description                                                       |
+| --------- | --------------------------------------- | ----------------------------------------------------------------- |
+| *(none)*  | Folder in `~/Videos/<title>_<quality>/` | Downloads video + ASS, keeps everything in folder                 |
+| `-burn`   | MP4 in `~/Videos/`                      | Burns subtitles into video, deletes temp files                    |
+| `-burn-e` | MP4 in `~/Videos/`                      | Opens `.ass` in `micro` for editing before burning                |
+| `-soft`   | MKV in `~/Videos/`                      | Muxes `.ass` as soft subtitle track (default), deletes temp files |
+| `-soft-e` | MKV in `~/Videos/`                      | Opens `.ass` in `micro` for editing before muxing                 |
 
-- Video is downloaded
-- .srv3 karaoke subtitles are extracted
-- Subtitles are converted to .ass
-- .srv3 files are deleted
-
-Output is saved to:
-
+**Example**
 ```
-~/Videos/<Video Title>/
+# Download video with subtitles, keep them in a folder
+./srv3.sh https://www.youtube.com/watch?v=abcd1234
+
+# Burn subtitles into MP4
+./srv3.sh https://www.youtube.com/watch?v=abcd1234 -burn
+
+# Edit subtitles before burning
+./srv3.sh https://www.youtube.com/watch?v=abcd1234 -burn-e
+
+# Add soft subtitles as default track (MKV)
+./srv3.sh https://www.youtube.com/watch?v=abcd1234 -soft
+
+# Edit soft subtitles before muxing
+./srv3.sh https://www.youtube.com/watch?v=abcd1234 -soft-e
 ```
 
 This workflow is specifically optimized for karaoke / syllable-animated subtitle tracks.
