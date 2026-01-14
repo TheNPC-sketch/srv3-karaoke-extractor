@@ -11,12 +11,38 @@
 #   -soft-e    -> edit ASS before muxing, MKV output, default track
 # ----------------------------------------
 
+# -------- HELP handling --------
+for arg in "$@"; do
+    if [[ "$arg" == "-help" ]]; then
+        cat <<'EOF'
+
+YTSubConverter + yt-dlp interactive downloader
+
+Usage:
+  srv3 <YouTube URL> [MODE]
+
+Modes:
+  (none)     -> Download video + ASS subtitles, keep everything in folder
+  -burn      -> Burn subtitles into video, MP4 output, auto cleanup
+  -burn-e    -> Edit ASS subtitles before burning, MP4 output
+  -soft      -> Mux ASS as soft subtitle track (default track), MKV output
+  -soft-e    -> Edit ASS subtitles before muxing, MKV output, default track
+  -help      -> Display this help message
+
+Example:
+  srv3 https://www.youtube.com/watch?v=example -burn-e
+
+EOF
+        exit 0
+    fi
+done
+
 # -------- argument handling --------
 URL="$1"
 MODE="normal"
 
 if [ -z "$URL" ]; then
-    echo "Usage: $0 <YouTube URL> [-burn | -burn-e | -soft | -soft-e]"
+    echo "Usage: $0 <YouTube URL> [-burn | -burn-e | -soft | -soft-e | -help]"
     exit 1
 fi
 
@@ -63,28 +89,26 @@ else
     mkdir -p "$DEST_DIR"
 fi
 
-# -------- set output filename based on mode --------
-if [[ "$MODE" == soft* ]]; then
-    FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}.mkv"
-else
-    FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}.mp4"
-fi
-
-echo "Downloading to: $DEST_DIR"
-
 # -------- download --------
 yt-dlp "$URL" \
     -f "$FORMAT_CODE" \
-    --merge-output-format mp4 \
     --write-subs \
     --sub-format srv3 \
     -o "$DEST_DIR/%(title)s.%(ext)s"
 
 echo "Download complete."
 
+# -------- find downloaded video file (any YouTube-supported extension) --------
+VIDEO_FILE=$(ls "$DEST_DIR"/* | grep -E '\.(mp4|mkv|webm|avi|flv|mov|m4a|3gp|ogg|ogv|ts|wmv)$' | head -n 1)
+if [ -z "$VIDEO_FILE" ]; then
+    echo "Error: no video file found in $DEST_DIR"
+    exit 1
+fi
+
+VIDEO_EXT="${VIDEO_FILE##*.}"  # get extension
+
 # -------- convert subtitles --------
 ASS_FILE=""
-
 for file in "$DEST_DIR"/*.srv3; do
     [ -f "$file" ] || continue
     ASS_FILE="${file%.srv3}.ass"
@@ -103,33 +127,44 @@ if [[ "$MODE" == "burn-edit" || "$MODE" == "soft-edit" ]]; then
     "$EDITOR_CMD" "$ASS_FILE"
 fi
 
-# -------- process video --------
-if [[ "$MODE" == "burn" || "$MODE" == "burn-edit" ]]; then
-    echo "Burning subtitles into video..."
-    VIDEO_FILE=$(ls "$DEST_DIR"/*.mp4 | head -n 1)
-
-    ffmpeg -y \
-        -i "$VIDEO_FILE" \
-        -vf "ass=$(printf '%q' "$ASS_FILE")" \
-        -c:a copy \
-        "$FINAL_OUTPUT"
-
-elif [[ "$MODE" == "soft" || "$MODE" == "soft-edit" ]]; then
-    echo "Muxing ASS subtitles as soft subtrack (default)..."
-    VIDEO_FILE=$(ls "$DEST_DIR"/*.mp4 | head -n 1)
-
-    ffmpeg -y \
-        -i "$VIDEO_FILE" \
-        -i "$ASS_FILE" \
-        -map 0:v -map 0:a -map 1:0 \
-        -c copy \
-        -metadata:s:s:0 language=eng \
-        -disposition:s:0 default \
-        "$FINAL_OUTPUT"
-fi
-
-# -------- cleanup --------
+# -------- process only if not normal mode --------
 if [[ "$MODE" != "normal" ]]; then
+
+    # -------- get video resolution --------
+    RESOLUTION=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$VIDEO_FILE")
+    RESOLUTION="${RESOLUTION}p"
+
+    # -------- set output filename based on mode --------
+    if [[ "$MODE" == soft* ]]; then
+        FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}_${RESOLUTION}.mkv"
+    else
+        FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}_${RESOLUTION}.mp4"
+    fi
+
+    # -------- process video --------
+    if [[ "$MODE" == "burn" || "$MODE" == "burn-edit" ]]; then
+        echo "Burning subtitles into video..."
+        ffmpeg -y \
+            -i "$VIDEO_FILE" \
+            -vf "ass=$(printf '%q' "$ASS_FILE")" \
+            -c:a copy \
+            "$FINAL_OUTPUT"
+
+    elif [[ "$MODE" == "soft" || "$MODE" == "soft-edit" ]]; then
+        echo "Muxing ASS subtitles as soft subtrack (default)..."
+        ffmpeg -y \
+            -i "$VIDEO_FILE" \
+            -i "$ASS_FILE" \
+            -map 0:v \
+            -map 0:a? \
+            -map 1:0 \
+            -c copy \
+            -metadata:s:s:0 language=eng \
+            -disposition:s:0 default \
+            "$FINAL_OUTPUT"
+    fi
+
+    # -------- cleanup --------
     echo "Cleaning up temporary files..."
     rm -rf "$DEST_DIR"
 fi
