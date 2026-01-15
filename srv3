@@ -65,6 +65,16 @@ fi
 # -------- default editor: micro --------
 EDITOR_CMD="${EDITOR:-micro}"
 
+# -------- directories --------
+VIDEOS_DIR="$HOME/Videos"
+TEMP_DIR="$VIDEOS_DIR/xx1.temp.1xx"
+
+# -------- cleanup leftover temp directory --------
+if [ -d "$TEMP_DIR" ]; then
+    echo "Removing leftover temporary directory: $TEMP_DIR"
+    rm -rf "$TEMP_DIR"
+fi
+
 # -------- metadata --------
 VIDEO_TITLE=$(yt-dlp --get-title "$URL")
 SAFE_TITLE=$(echo "$VIDEO_TITLE" | sed 's#[/:]#_#g')
@@ -78,14 +88,12 @@ read -p "Enter the format code you want to download: " FORMAT_CODE
 FORMAT_INFO=$(yt-dlp -F "$URL" | grep "^$FORMAT_CODE " | awk '{print $3,$4}')
 QUALITY_SUFFIX=$(echo "$FORMAT_INFO" | tr -d ' ')
 
-VIDEOS_DIR="$HOME/Videos"
-
 # -------- destination handling --------
 if [[ "$MODE" == "normal" ]]; then
     DEST_DIR="$VIDEOS_DIR/${SAFE_TITLE}_${QUALITY_SUFFIX}"
     mkdir -p "$DEST_DIR"
 else
-    DEST_DIR="$VIDEOS_DIR/temp"
+    DEST_DIR="$TEMP_DIR"
     mkdir -p "$DEST_DIR"
 fi
 
@@ -98,14 +106,14 @@ yt-dlp "$URL" \
 
 echo "Download complete."
 
-# -------- find downloaded video file (any YouTube-supported extension) --------
+# -------- find downloaded video file --------
 VIDEO_FILE=$(ls "$DEST_DIR"/* | grep -E '\.(mp4|mkv|webm|avi|flv|mov|m4a|3gp|ogg|ogv|ts|wmv)$' | head -n 1)
 if [ -z "$VIDEO_FILE" ]; then
     echo "Error: no video file found in $DEST_DIR"
     exit 1
 fi
 
-VIDEO_EXT="${VIDEO_FILE##*.}"  # get extension
+VIDEO_EXT="${VIDEO_FILE##*.}"
 
 # -------- convert subtitles --------
 ASS_FILE=""
@@ -134,7 +142,7 @@ if [[ "$MODE" != "normal" ]]; then
     RESOLUTION=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$VIDEO_FILE")
     RESOLUTION="${RESOLUTION}p"
 
-    # -------- set output filename based on mode --------
+    # -------- set output filename --------
     if [[ "$MODE" == soft* ]]; then
         FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}_${RESOLUTION}.mkv"
     else
