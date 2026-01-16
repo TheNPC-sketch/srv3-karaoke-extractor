@@ -9,6 +9,7 @@
 #   -burn-e    -> edit ASS before burning, MP4 output
 #   -soft      -> mux ASS as soft subtitle track, MKV output, default track
 #   -soft-e    -> edit ASS before muxing, MKV output, default track
+#   -subs      -> download subtitles only (ASS), no video, no folder
 # ----------------------------------------
 
 # -------- HELP handling --------
@@ -27,10 +28,11 @@ Modes:
   -burn-e    -> Edit ASS subtitles before burning, MP4 output
   -soft      -> Mux ASS as soft subtitle track (default track), MKV output
   -soft-e    -> Edit ASS subtitles before muxing, MKV output, default track
+  -subs      -> Download subtitles only (ASS), no video, no folder
   -help      -> Display this help message
 
 Example:
-  srv3 https://www.youtube.com/watch?v=example -burn-e
+  srv3 https://www.youtube.com/watch?v=example -subs
 
 EOF
         exit 0
@@ -42,7 +44,7 @@ URL="$1"
 MODE="normal"
 
 if [ -z "$URL" ]; then
-    echo "Usage: $0 <YouTube URL> [-burn | -burn-e | -soft | -soft-e | -help]"
+    echo "Usage: $0 <YouTube URL> [-burn | -burn-e | -soft | -soft-e | -subs | -help]"
     exit 1
 fi
 
@@ -51,18 +53,19 @@ case "$2" in
     -burn-e)  MODE="burn-edit" ;;
     -soft)    MODE="soft" ;;
     -soft-e)  MODE="soft-edit" ;;
+    -subs)    MODE="subs" ;;
 esac
 
 # -------- dependency checks --------
 command -v yt-dlp >/dev/null || { echo "yt-dlp not installed"; exit 1; }
 command -v ytsubconverter >/dev/null || { echo "YTSubConverter not found"; exit 1; }
 
-if [[ "$MODE" != "normal" ]] && ! command -v ffmpeg >/dev/null; then
+if [[ "$MODE" != "normal" && "$MODE" != "subs" ]] && ! command -v ffmpeg >/dev/null; then
     echo "ffmpeg is required for this mode"
     exit 1
 fi
 
-# -------- default editor: micro --------
+# -------- default editor --------
 EDITOR_CMD="${EDITOR:-micro}"
 
 # -------- directories --------
@@ -79,41 +82,52 @@ fi
 VIDEO_TITLE=$(yt-dlp --get-title "$URL")
 SAFE_TITLE=$(echo "$VIDEO_TITLE" | sed 's#[/:]#_#g')
 
-# -------- format selection --------
-echo "Available formats for \"$VIDEO_TITLE\":"
-yt-dlp -F "$URL"
-read -p "Enter the format code you want to download: " FORMAT_CODE
+# -------- format selection (skip for subs) --------
+if [[ "$MODE" != "subs" ]]; then
+    echo "Available formats for \"$VIDEO_TITLE\":"
+    yt-dlp -F "$URL"
+    read -p "Enter the format code you want to download: " FORMAT_CODE
 
-# -------- quality suffix --------
-FORMAT_INFO=$(yt-dlp -F "$URL" | grep "^$FORMAT_CODE " | awk '{print $3,$4}')
-QUALITY_SUFFIX=$(echo "$FORMAT_INFO" | tr -d ' ')
+    FORMAT_INFO=$(yt-dlp -F "$URL" | grep "^$FORMAT_CODE " | awk '{print $3,$4}')
+    QUALITY_SUFFIX=$(echo "$FORMAT_INFO" | tr -d ' ')
+fi
 
 # -------- destination handling --------
 if [[ "$MODE" == "normal" ]]; then
     DEST_DIR="$VIDEOS_DIR/${SAFE_TITLE}_${QUALITY_SUFFIX}"
     mkdir -p "$DEST_DIR"
+elif [[ "$MODE" == "subs" ]]; then
+    DEST_DIR="$VIDEOS_DIR"
 else
     DEST_DIR="$TEMP_DIR"
     mkdir -p "$DEST_DIR"
 fi
 
 # -------- download --------
-yt-dlp "$URL" \
-    -f "$FORMAT_CODE" \
-    --write-subs \
-    --sub-format srv3 \
-    -o "$DEST_DIR/%(title)s.%(ext)s"
+if [[ "$MODE" == "subs" ]]; then
+    yt-dlp "$URL" \
+        --skip-download \
+        --write-subs \
+        --sub-format srv3 \
+        -o "$DEST_DIR/%(title)s.%(ext)s"
+else
+    yt-dlp "$URL" \
+        -f "$FORMAT_CODE" \
+        --write-subs \
+        --sub-format srv3 \
+        -o "$DEST_DIR/%(title)s.%(ext)s"
+fi
 
 echo "Download complete."
 
-# -------- find downloaded video file --------
-VIDEO_FILE=$(ls "$DEST_DIR"/* | grep -E '\.(mp4|mkv|webm|avi|flv|mov|m4a|3gp|ogg|ogv|ts|wmv)$' | head -n 1)
-if [ -z "$VIDEO_FILE" ]; then
-    echo "Error: no video file found in $DEST_DIR"
-    exit 1
+# -------- find downloaded video file (not for subs) --------
+if [[ "$MODE" != "subs" ]]; then
+    VIDEO_FILE=$(ls "$DEST_DIR"/* | grep -E '\.(mp4|mkv|webm|avi|flv|mov|m4a|3gp|ogg|ogv|ts|wmv)$' | head -n 1)
+    if [ -z "$VIDEO_FILE" ]; then
+        echo "Error: no video file found in $DEST_DIR"
+        exit 1
+    fi
 fi
-
-VIDEO_EXT="${VIDEO_FILE##*.}"
 
 # -------- convert subtitles --------
 ASS_FILE=""
@@ -128,28 +142,24 @@ done
 # -------- edit subtitles if requested --------
 if [[ "$MODE" == "burn-edit" || "$MODE" == "soft-edit" ]]; then
     echo
-    echo "Editing ASS file in micro:"
+    echo "Editing ASS file:"
     echo "$ASS_FILE"
-    echo "Save and exit to continue."
     echo
     "$EDITOR_CMD" "$ASS_FILE"
 fi
 
-# -------- process only if not normal mode --------
-if [[ "$MODE" != "normal" ]]; then
+# -------- process only if needed --------
+if [[ "$MODE" != "normal" && "$MODE" != "subs" ]]; then
 
-    # -------- get video resolution --------
     RESOLUTION=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$VIDEO_FILE")
     RESOLUTION="${RESOLUTION}p"
 
-    # -------- set output filename --------
     if [[ "$MODE" == soft* ]]; then
         FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}_${RESOLUTION}.mkv"
     else
         FINAL_OUTPUT="$VIDEOS_DIR/${SAFE_TITLE}_${RESOLUTION}.mp4"
     fi
 
-    # -------- process video --------
     if [[ "$MODE" == "burn" || "$MODE" == "burn-edit" ]]; then
         echo "Burning subtitles into video..."
         ffmpeg -y \
@@ -172,7 +182,6 @@ if [[ "$MODE" != "normal" ]]; then
             "$FINAL_OUTPUT"
     fi
 
-    # -------- cleanup --------
     echo "Cleaning up temporary files..."
     rm -rf "$DEST_DIR"
 fi
