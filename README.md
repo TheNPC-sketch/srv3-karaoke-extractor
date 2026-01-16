@@ -116,6 +116,8 @@ srv3 "https://www.youtube.com/watch?v=VIDEO_ID" [MODE]
 | `-soft`   | MKV in `~/Videos/`                      | Muxes `.ass` as soft subtitle track (default), deletes temp files |
 | `-soft-e` | MKV in `~/Videos/`                      | Opens `.ass` in `micro` for editing before muxing                 |
 | `-subs`   | ASS in `~/Videos/`                      | Downloads only ASS subtitle file                                  |
+
+
 **Example**
 ```
 # Download video with subtitles, keep them in a folder
