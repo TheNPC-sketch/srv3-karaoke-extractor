@@ -1,11 +1,12 @@
 # srv3-karaoke-extractor – YouTube Karaoke Subtitle Extractor (.srv3 → .ass)
 
-`srv3` is a Linux command-line tool designed specifically for YouTube videos that use karaoke-style, syllable-animated subtitles (the `.srv3` subtitle format).
+srv3 is a Linux command-line tool designed specifically for YouTube videos that use karaoke-style, syllable-animated subtitles (the .srv3 subtitle format).
 
-It downloads the video, extracts YouTube’s timing-accurate karaoke subtitle data, converts it to `.ass` format (preserving syllable animation and timing), and organizes everything cleanly into your `~/Videos` directory.
+It downloads the video, extracts YouTube’s timing-accurate karaoke subtitle data, converts it to .ass format (preserving syllable animation and timing), and organizes everything cleanly into your ~/Videos directory.
 
-This tool is built to work out of the box for **your debian-based distro**, with a fully automated installer for Debian/Ubuntu-based systems (including Xubuntu).
+In newer versions, due to YouTube switching to SABR streaming, srv3 downloads video-only footage and automatically combines it with the best available audio stream during processing. This ensures maximum video quality while remaining compatible with YouTube’s current delivery format.
 
+The tool is built to work out of the box on Debian-based distributions, with a fully automated installer for Debian/Ubuntu systems (including Xubuntu).
 ---
 
 ## 🎤 Why .srv3 / Karaoke Subtitles?
@@ -107,20 +108,21 @@ Download karaoke-subbed videos by using the following command:
 ```
 srv3 "https://www.youtube.com/watch?v=VIDEO_ID" [MODE]
 ```
+The script downloads SABR video + best audio, extracts YouTube srv3 subtitles, converts them to ASS, and optionally burns or muxes them.
 
-| Mode      | Output                                  | Description                                                       |
-| --------- | --------------------------------------- | ----------------------------------------------------------------- |
-| *(none)*  | Folder in `~/Videos/<title>_<quality>/` | Downloads video + ASS, keeps everything in folder                 |
-| `-burn`   | MP4 in `~/Videos/`                      | Burns subtitles into video, deletes temp files                    |
-| `-burn-e` | MP4 in `~/Videos/`                      | Opens `.ass` in `micro` for editing before burning                |
-| `-soft`   | MKV in `~/Videos/`                      | Muxes `.ass` as soft subtitle track (default), deletes temp files |
-| `-soft-e` | MKV in `~/Videos/`                      | Opens `.ass` in `micro` for editing before muxing                 |
-| `-subs`   | ASS in `~/Videos/`                      | Downloads only ASS subtitle file                                  |
-
+| Mode      | Output Location               | Output Type     | Description                                                   |
+| --------- | ----------------------------- | --------------- | ------------------------------------------------------------- |
+| *(none)*  | `~/Videos/<title>_<quality>/` | Folder          | Downloads video + ASS subtitles and keeps all files           |
+| `-burn`   | `~/Videos/`                   | MP4             | Burns ASS subtitles into video and deletes temp files         |
+| `-burn-e` | `~/Videos/`                   | MP4             | Opens ASS in editor before burning                            |
+| `-soft`   | `~/Videos/`                   | MKV             | Muxes ASS as soft subtitle (default track), cleans temp files |
+| `-soft-e` | `~/Videos/`                   | MKV             | Opens ASS in editor before muxing                             |
+| `-subs-o` | `~/Videos/`                   | ASS             | Downloads **only subtitles** (no video)                       |
+| `-subs`   | Depends on extra flags        | ASS / MKV / MP4 | Downloads video from URL1 and subtitles from URL2             |
 
 **Example**
 ```
-# Download video with subtitles, keep them in a folder
+# Download video + subtitles, keep everything in a folder
 srv3 "https://www.youtube.com/watch?v=abcd1234"
 
 # Burn subtitles into MP4
@@ -129,14 +131,46 @@ srv3 "https://www.youtube.com/watch?v=abcd1234" -burn
 # Edit subtitles before burning
 srv3 "https://www.youtube.com/watch?v=abcd1234" -burn-e
 
-# Add soft subtitles as default track (MKV)
+# Mux subtitles as soft track (MKV)
 srv3 "https://www.youtube.com/watch?v=abcd1234" -soft
 
-# Edit soft subtitles before muxing
+# Edit subtitles before muxing
 srv3 "https://www.youtube.com/watch?v=abcd1234" -soft-e
+
+# Download only the ASS subtitle file
+srv3 "https://www.youtube.com/watch?v=abcd1234" -subs-o
 ```
 
-This workflow is specifically optimized for karaoke / syllable-animated subtitle tracks.
+**Using `-subs`(Seperate Video and Subtitle URLs)**
+
+You can download video from one URL and subtitles from another (useful for reuploads, lyric videos, or alternate subtitle sources).
+
+```
+srv3 <VIDEO_URL> -subs <SUBS_URL> [PROCESS_MODE]
+```
+Supported processing modes after `-subs`:
+- `-soft`
+- `-soft-e`
+- `-burn`
+- `-burn-e`
+
+**Examples**
+```
+# Video from URL1 + subtitles from URL2, keep files in folder
+srv3 "VIDEO_URL" -subs "SUBS_URL"
+
+# Video from URL1 + subtitles from URL2, burn into MP4
+srv3 "VIDEO_URL" -subs "SUBS_URL" -burn
+
+# Edit subtitles before burning
+srv3 "VIDEO_URL" -subs "SUBS_URL" -burn-e
+
+# Mux subtitles as soft ASS track
+srv3 "VIDEO_URL" -subs "SUBS_URL" -soft
+
+# Edit subtitles before muxing
+srv3 "VIDEO_URL" -subs "SUBS_URL" -soft-e
+```
 
 ## 🎚 Format Selection
 
